@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Spendly — Smart Expense Tracker</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+<div class="app">
+
+  <!-- ── HEADER ─────────────────────────────────────────────────── -->
+  <header>
+    <div class="logo">
+      <div class="logo-icon">💸</div>
+      <div class="logo-text">Spend<span>ly</span></div>
+    </div>
+    <div class="header-right">
+      <div class="month-badge" id="monthBadge">MARCH 2026</div>
+      <button class="icon-btn" id="themeBtn" onclick="toggleTheme()" title="Toggle theme">🌙</button>
+      <button class="icon-btn" onclick="openExportModal()" title="Export">📤</button>
+      <button class="icon-btn" onclick="requestNotif()" title="Notifications">🔔</button>
+    </div>
+  </header>
+
+  <!-- ── NOTIFICATION BANNER ────────────────────────────────────── -->
+  <div id="notifBanner" style="display:none" class="notif-banner">
+    <span>⚠️</span>
+    <span id="notifText"></span>
+    <button class="notif-close" onclick="this.parentElement.style.display='none'">✕</button>
+  </div>
+
+  <!-- ── TABS ───────────────────────────────────────────────────── -->
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('dashboard',this)">📊 Dashboard</button>
+    <button class="tab" onclick="switchTab('analytics',this)">📈 Analytics</button>
+    <button class="tab" onclick="switchTab('recurring',this)">🔁 Recurring</button>
+    <button class="tab" onclick="switchTab('wrapped',this)">✨ Wrapped</button>
+  </div>
+
+  <!-- ══════════════════ DASHBOARD ══════════════════ -->
+  <div class="view active" id="view-dashboard">
+
+    <!-- Stats Row -->
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="stat-label">Total Spent</div>
+        <div class="stat-value" id="totalSpent">₹0</div>
+        <div class="stat-sub" id="txCount">0 transactions</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Top Category</div>
+        <div class="stat-value" id="topCat" style="font-size:17px">—</div>
+        <div class="stat-sub" id="topCatAmt">no data yet</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Daily Average</div>
+        <div class="stat-value" id="dailyAvg">₹0</div>
+        <div class="stat-sub" id="vsLast">this month</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Biggest Expense</div>
+        <div class="stat-value" id="bigAmt" style="font-size:17px">₹0</div>
+        <div class="stat-sub" id="bigName">none yet</div>
+      </div>
+    </div>
+
+    <!-- Main Grid -->
+    <div class="main-grid">
+      <div class="left-col">
+
+        <!-- Add Expense Form -->
+        <div class="panel" style="animation-delay:.1s">
+          <div class="panel-title"><div class="ptl">Add Expense</div></div>
+          <div class="form-row">
+            <div class="fg">
+              <label>Description</label>
+              <input type="text" id="desc" placeholder="e.g. Lunch at Café" autocomplete="off"/>
+            </div>
+            <div class="fg">
+              <label>Amount (₹)</label>
+              <input type="number" id="amount" placeholder="0" min="0" step="1"/>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="fg">
+              <label>Category</label>
+              <select id="category">
+                <option value="Food">🍔 Food</option>
+                <option value="Transport">🚗 Transport</option>
+                <option value="Shopping">🛍 Shopping</option>
+                <option value="Health">💊 Health</option>
+                <option value="Entertainment">🎬 Entertainment</option>
+                <option value="Bills">🧾 Bills</option>
+                <option value="Education">📚 Education</option>
+                <option value="Other">📦 Other</option>
+              </select>
+            </div>
+            <div class="fg">
+              <label>Date</label>
+              <input type="date" id="date"/>
+            </div>
+          </div>
+          <button class="add-btn" onclick="addExpense()">+ Add Expense</button>
+        </div>
+
+        <!-- Trend Chart -->
+        <div class="panel" style="animation-delay:.2s">
+          <div class="panel-title"><div class="ptl">Weekly Spending Trend</div></div>
+          <div class="trend-wrap"><svg id="trendChart"></svg></div>
+          <div class="trend-labels" id="trendLabels"></div>
+        </div>
+
+        <!-- Biggest Expense -->
+        <div class="panel" id="bigPanel" style="display:none;animation-delay:.3s">
+          <div class="panel-title"><div class="ptl">Highlight</div></div>
+          <div class="big-card" id="bigCard"></div>
+        </div>
+
+        <!-- Transaction List -->
+        <div class="panel" style="animation-delay:.35s">
+          <div class="panel-title">
+            <div class="ptl">Transactions</div>
+          </div>
+          <select onchange="filterTx(this.value)" style="margin-bottom:12px;width:auto;padding:6px 10px;font-size:11px">
+            <option value="all">All Categories</option>
+            <option value="Food">🍔 Food</option>
+            <option value="Transport">🚗 Transport</option>
+            <option value="Shopping">🛍 Shopping</option>
+            <option value="Health">💊 Health</option>
+            <option value="Entertainment">🎬 Entertainment</option>
+            <option value="Bills">🧾 Bills</option>
+            <option value="Education">📚 Education</option>
+            <option value="Other">📦 Other</option>
+          </select>
+          <div class="tx-list" id="txList">
+            <div class="empty"><div class="ei">🧾</div><p>No expenses yet.<br>Add your first one!</p></div>
+          </div>
+        </div>
+
+      </div><!-- /left-col -->
+      <div>
+
+        <!-- Donut Chart -->
+        <div class="panel" style="animation-delay:.25s">
+          <div class="panel-title"><div class="ptl">Spending Distribution</div></div>
+          <div class="donut-wrap">
+            <svg id="donutChart" width="148" height="148" viewBox="0 0 148 148"></svg>
+            <div class="donut-center">
+              <div class="donut-center-val" id="donutVal">₹0</div>
+              <div class="donut-center-label">total</div>
+            </div>
+          </div>
+          <div class="bar-row" id="catBars"></div>
+        </div>
+
+        <!-- Budget -->
+        <div class="panel" style="margin-top:16px;animation-delay:.35s">
+          <div class="panel-title">
+            <div class="ptl">Budget Limits</div>
+            <button onclick="openModal('budgetModal')" style="background:none;border:none;color:var(--accent);font-size:11px;cursor:pointer;font-family:var(--font-d);font-weight:700">+ Set</button>
+          </div>
+          <div id="budgetBars">
+            <div class="empty" style="padding:16px"><p>No budgets set yet</p></div>
+          </div>
+        </div>
+
+      </div>
+    </div><!-- /main-grid -->
+  </div><!-- /view-dashboard -->
+
+  <!-- ══════════════════ ANALYTICS ══════════════════ -->
+  <div class="view" id="view-analytics">
+    <div class="main-grid">
+      <div class="left-col">
+        <div class="panel" style="animation-delay:.1s">
+          <div class="panel-title"><div class="ptl">Weekly Spending Trend</div></div>
+          <div class="trend-wrap"><svg id="trendChart2"></svg></div>
+          <div class="trend-labels" id="trendLabels2"></div>
+        </div>
+        <div class="panel" style="animation-delay:.2s">
+          <div class="panel-title"><div class="ptl">Monthly Comparison</div></div>
+          <div id="compareRows">
+            <div class="empty" style="padding:16px"><p>Add expenses to see comparison</p></div>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="panel" style="animation-delay:.15s">
+          <div class="panel-title"><div class="ptl">30-Day Spending Heatmap</div></div>
+          <div class="heatmap-grid" id="heatmapGrid"></div>
+          <div style="display:flex;align-items:center;gap:6px;margin-top:10px">
+            <span style="font-family:var(--font-m);font-size:9px;color:var(--muted)">Less</span>
+            <div style="width:10px;height:10px;border-radius:2px;background:var(--border)"></div>
+            <div style="width:10px;height:10px;border-radius:2px;background:rgba(124,106,247,0.3)"></div>
+            <div style="width:10px;height:10px;border-radius:2px;background:rgba(124,106,247,0.65)"></div>
+            <div style="width:10px;height:10px;border-radius:2px;background:var(--accent)"></div>
+            <span style="font-family:var(--font-m);font-size:9px;color:var(--muted)">More</span>
+          </div>
+        </div>
+        <div class="panel" style="margin-top:16px;animation-delay:.25s">
+          <div class="panel-title"><div class="ptl">Category Deep Dive</div></div>
+          <div id="deepDive">
+            <div class="empty" style="padding:16px"><p>Add expenses to see insights</p></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div><!-- /view-analytics -->
+
+  <!-- ══════════════════ RECURRING ══════════════════ -->
+  <div class="view" id="view-recurring">
+    <div class="main-grid">
+      <div class="left-col">
+        <div class="panel">
+          <div class="panel-title"><div class="ptl">Recurring Expenses</div></div>
+          <p style="font-family:var(--font-m);font-size:11px;color:var(--muted);margin-bottom:14px;line-height:1.6">
+            Expenses that repeat every month — rent, subscriptions, EMIs etc. Click "Apply" to add them to this month.
+          </p>
+          <div class="rec-list" id="recList">
+            <div class="empty"><div class="ei">🔁</div><p>No recurring expenses yet</p></div>
+          </div>
+          <button class="dash-btn" onclick="openModal('recModal')">+ Add Recurring Expense</button>
+        </div>
+      </div>
+      <div>
+        <div class="panel">
+          <div class="panel-title"><div class="ptl">Monthly Committed</div></div>
+          <div style="text-align:center;padding:18px 0">
+            <div style="font-size:34px;font-weight:800;color:var(--accent4)" id="recTotal">₹0</div>
+            <div style="font-family:var(--font-m);font-size:10px;color:var(--muted);margin-top:5px">per month</div>
+          </div>
+          <div id="recBreakdown"></div>
+        </div>
+      </div>
+    </div>
+  </div><!-- /view-recurring -->
+
+  <!-- ══════════════════ WRAPPED ══════════════════ -->
+  <div class="view" id="view-wrapped">
+    <div class="main-grid">
+      <div class="left-col">
+        <div class="wrapped-card">
+          <div class="wrap-title">Spending<br>Summary ✨</div>
+          <div class="wrap-sub" id="wrapMonth">MARCH 2026</div>
+          <div style="font-size:46px;margin:10px 0" id="wrapEmoji">💸</div>
+          <div style="font-size:13px;color:rgba(255,255,255,0.65);font-weight:600;margin-bottom:4px" id="wrapInsight">
+            Add some expenses to see your summary!
+          </div>
+          <div class="wrap-stats" id="wrapStats"></div>
+        </div>
+        <div class="panel" style="margin-top:16px">
+          <div class="panel-title"><div class="ptl">Fun Insights</div></div>
+          <div id="funInsights">
+            <div class="empty" style="padding:16px"><p>Add expenses to unlock insights</p></div>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="panel">
+          <div class="panel-title"><div class="ptl">Export & Share</div></div>
+          <div class="exp-grid">
+            <button class="exp-btn" onclick="exportCSV()">
+              <span class="ei">📊</span><span class="el">Export CSV</span><span class="es">Open in Excel</span>
+            </button>
+            <button class="exp-btn" onclick="exportPDF()">
+              <span class="ei">📄</span><span class="el">PDF Report</span><span class="es">Print / Save</span>
+            </button>
+            <button class="exp-btn" onclick="shareWrapped()">
+              <span class="ei">📋</span><span class="el">Copy Summary</span><span class="es">Share anywhere</span>
+            </button>
+            <button class="exp-btn" onclick="clearAll()">
+              <span class="ei">🗑️</span><span class="el">Clear Data</span><span class="es">Reset everything</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div><!-- /view-wrapped -->
+
+</div><!-- /app -->
+
+<!-- ── BUDGET MODAL ────────────────────────────────────────────── -->
+<div class="modal-bg" id="budgetModal">
+  <div class="modal">
+    <div class="modal-title">💰 Set Budget Limit</div>
+    <div class="fg" style="margin-bottom:12px">
+      <label>Category</label>
+      <select id="budgetCat">
+        <option value="Food">🍔 Food</option>
+        <option value="Transport">🚗 Transport</option>
+        <option value="Shopping">🛍 Shopping</option>
+        <option value="Health">💊 Health</option>
+        <option value="Entertainment">🎬 Entertainment</option>
+        <option value="Bills">🧾 Bills</option>
+        <option value="Education">📚 Education</option>
+        <option value="Other">📦 Other</option>
+      </select>
+    </div>
+    <div class="fg">
+      <label>Monthly Budget (₹)</label>
+      <input type="number" id="budgetAmt" placeholder="e.g. 5000" min="0"/>
+    </div>
+    <div class="modal-actions">
+      <button class="mbtn secondary" onclick="closeModal('budgetModal')">Cancel</button>
+      <button class="mbtn primary" onclick="saveBudget()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── RECURRING MODAL ─────────────────────────────────────────── -->
+<div class="modal-bg" id="recModal">
+  <div class="modal">
+    <div class="modal-title">🔁 Add Recurring Expense</div>
+    <div class="form-row">
+      <div class="fg"><label>Name</label><input type="text" id="recName" placeholder="e.g. Netflix"/></div>
+      <div class="fg"><label>Amount (₹)</label><input type="number" id="recAmt" placeholder="0" min="0"/></div>
+    </div>
+    <div class="fg" style="margin-bottom:4px">
+      <label>Category</label>
+      <select id="recCat">
+        <option value="Entertainment">🎬 Entertainment</option>
+        <option value="Bills">🧾 Bills</option>
+        <option value="Food">🍔 Food</option>
+        <option value="Transport">🚗 Transport</option>
+        <option value="Shopping">🛍 Shopping</option>
+        <option value="Health">💊 Health</option>
+        <option value="Education">📚 Education</option>
+        <option value="Other">📦 Other</option>
+      </select>
+    </div>
+    <div class="modal-actions">
+      <button class="mbtn secondary" onclick="closeModal('recModal')">Cancel</button>
+      <button class="mbtn primary" onclick="saveRecurring()">Add</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── EXPORT MODAL ───────────────────────────────────────────── -->
+<div class="modal-bg" id="exportModal">
+  <div class="modal">
+    <div class="modal-title">📤 Export Options</div>
+    <div class="exp-grid" style="margin-bottom:16px">
+      <button class="exp-btn" onclick="exportCSV();closeModal('exportModal')">
+        <span class="ei">📊</span><span class="el">CSV</span><span class="es">Excel/Sheets</span>
+      </button>
+      <button class="exp-btn" onclick="exportPDF();closeModal('exportModal')">
+        <span class="ei">📄</span><span class="el">PDF</span><span class="es">Print-ready</span>
+      </button>
+    </div>
+    <button class="mbtn secondary" onclick="closeModal('exportModal')" style="width:100%;border:1px solid var(--border)">Close</button>
+  </div>
+</div>
+
+<!-- ── SCRIPTS ─────────────────────────────────────────────────── -->
+<script src="js/data.js"></script>
+<script src="js/render.js"></script>
+<script src="js/actions.js"></script>
+<script src="js/utils.js"></script>
+<script>
+  // ── BOOT ──────────────────────────────────────────────────────
+  document.getElementById('date').valueAsDate = now;
+  const mb = now.toLocaleString('default', { month: 'long' }).toUpperCase() + ' ' + now.getFullYear();
+  document.getElementById('monthBadge').textContent = mb;
+  document.getElementById('wrapMonth').textContent  = mb;
+
+  // Restore theme
+  const st = localStorage.getItem('sp2_theme');
+  if (st) {
+    document.documentElement.setAttribute('data-theme', st);
+    document.getElementById('themeBtn').textContent = st === 'light' ? '🌞' : '🌙';
+  }
+
+  render();
+  setTimeout(renderTrend, 250);
+
+  // Daily reminder
+  const lastVisit = localStorage.getItem('sp2_last');
+  const today     = now.toISOString().split('T')[0];
+  if (lastVisit && lastVisit !== today && expenses.length > 0) {
+    setTimeout(() => toast("📅 Don't forget to log today's expenses!", 'i'), 2000);
+  }
+  localStorage.setItem('sp2_last', today);
+</script>
+</body>
+</html>
