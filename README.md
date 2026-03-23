@@ -2,7 +2,7 @@
 
 A clean, modern, single-page expense tracker built with vanilla HTML, CSS, and JavaScript. No frameworks, no build tools, no dependencies — just open `index.html` and go.
 
-![Dark mode dashboard with expense stats, donut chart, and transaction list](https://via.placeholder.com/900x500/0a0a0f/7c6af7?text=Spendly+Screenshot)
+![Dark mode dashboard with expense stats, donut chart, and transaction list]
 
 ---
 
